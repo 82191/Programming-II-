@@ -1,0 +1,47 @@
+
+#include <SoftwareSerial.h> //시리얼 통신 라이브러리
+#include "Servo.h" //서보 라이브러리 
+
+//블루투스
+int bleTx = 3; //Tx (블루투스 보내는 핀)
+int bleRx = 2; //Rx (블루투스 받는 핀)
+SoftwareSerial bluetooth(bleTx, bleRx); //시리얼 통신을 위한 객체 선언
+String bleInputString = ""; //블루투스로부터 받는 문자열
+String servoOnTriggerCommand = "on";
+
+//서보
+Servo myservo;
+int servoSignal = 7; //서보 시그널 핀
+int servoInitialAngle = 0; //초기 각도
+int servoOffAngle = 0;
+int servoOnAngle = 30;
+
+void setup() {
+  myservo.attach(servoSignal);  //서보 시그널 핀 설정. 지정한 핀에 연결된 서보모터를 활성화
+  myservo.write(servoInitialAngle); //서보 초기 각도 설정
+  
+  bluetooth.begin(9600); //블루투스 시리얼 개방
+  Serial.begin(9600); //디버그용 시리얼 개방
+}
+
+void loop() {
+  while (bluetooth.available()) {
+    char inputChar = (char)bluetooth.read(); //bluetooth 로 부터 읽어온 int 형식의 값을 char 로 변환
+    if (inputChar != '\n') {
+      //1 바이트씩 전송되는 것을 모두 붙임. 다만 아래에서 input 값 비교할때를 위해 \n은 제외.
+      bleInputString += inputChar;
+    }
+
+    delay(5); // 수신 문자열 끊김 방지
+  }
+
+  if (!bleInputString.equals("")) {
+    Serial.println(bleInputString); //디버그용 출력
+    if (bleInputString == servoOnTriggerCommand) {
+      myservo.write(servoOnAngle);
+    } else {
+      myservo.write(servoOffAngle);
+    }
+    bleInputString = "";
+  }
+}
